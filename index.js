@@ -8,8 +8,10 @@ function click(target, callback) {
   nightmare
     .goto('https://www.steamgifts.com/' + target.link)
     .wait('body')
+    // .click('form[action*="/search"] [type=submit]')
+    .click('.sidebar__entry-insert')
     .then(function() {
-      console.log(target.link);
+      console.log(target.link + '... clicked!');
       setTimeout(function(){
         callback();
       }, 4000);
@@ -17,15 +19,13 @@ function click(target, callback) {
 }
 
 function clickThrough(targets) {
+  if(targets.length == 0) {
+    console.log('No target remained');
+    return;
+  }
   click(targets[0], function() {
     targets.shift();
-
-    if(targets.length > 0) {
-      clickThrough(targets);
-    }
-    else {
-      return;
-    }
+    clickThrough(targets);
   })
 }
 
@@ -33,7 +33,6 @@ function start() {
   nightmare
     .goto('https://www.steamgifts.com/')
     // .type('form[action*="/search"] [name=p]', 'github nightmare')
-    // .click('form[action*="/search"] [type=submit]')
     .wait('.page__outer-wrap')
     .evaluate(function () {
       return document.querySelector('.page__outer-wrap').innerHTML;
@@ -75,7 +74,7 @@ function start() {
 
     setTimeout(function() {
       start();
-    }, 40*60*1000);
+    }, 10*60*1000);
 }
 
 start();
