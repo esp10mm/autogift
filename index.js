@@ -4,6 +4,35 @@ var cheerio = require('cheerio');
 
 const ENTRIES_MUL_MINUTE = 6000;
 
+function shouldClick(entry) {
+  if(entry.time.indexOf('hour') !== -1) {
+    return
+  }
+  if(entry.value < ENTRIES_MUL_MINUTE) {
+    return true;
+  }
+
+}
+
+function parseEntry(el) {
+  var time = el.find('.giveaway__columns').text().trim();
+  var name = el.find('.giveaway__heading__name').text();
+  var link = el.find('.giveaway__heading__name').attr('href');
+  var minute = parseInt(time.split('minutes')[0]);
+  var entries = parseInt(el.find('.giveaway__links a span').first().text().split('entries')[0].replace(/,/g, ""));
+
+  var result = {
+    time: time,
+    name: name,
+    link: link,
+    minute: minute,
+    entries: entries,
+    value: minute*entries,
+  }
+
+  return result;
+}
+
 function click(target, callback) {
   nightmare
     .goto('https://www.steamgifts.com/' + target.link)
@@ -43,20 +72,11 @@ function start() {
 
       $('.giveaway__row-inner-wrap').each(function(i, el) {
         if(!$(this).hasClass('is-faded')) {
-          var obj = {};
-          var time = $(this).find('.giveaway__columns').text().trim();
+          
+          var obj = parseEntry($(this));
 
-          if(time.indexOf('hour') !== -1) {
-            return
-          }
-
-          var name = $(this).find('.giveaway__heading__name').text();
-          var link = $(this).find('.giveaway__heading__name').attr('href');
-          var minute = parseInt(time.split('minutes')[0]);
-          var entries = parseInt($(this).find('.giveaway__links a span').first().text().split('entries')[0].replace(/,/g, ""));
-
-          if(entries*minute < ENTRIES_MUL_MINUTE) {
-            targets.push({link:link, value:entries*minute});
+          if(shouldClick(obj)) {
+            targets.push({link:obj.link, value:obj.value});
           }
 
         }
