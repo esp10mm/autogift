@@ -24,7 +24,16 @@ const shouldClick = (entry) => {
   if(entry.time.indexOf('hours remain') !== -1) {
     return false;
   }
-  if(entry.entries < 500) {
+  let leftTime = 1000;
+  if (entry.time.indexOf('seconds') !== -1) {
+    leftTime = parseInt(entry.time.split('seconds')[0], 0);
+  } else if (entry.time.indexOf('minutes') !== -1) {
+    leftTime = parseInt(entry.time.split('minutes')[0], 0) * 60;
+  } else {
+    return false;
+  }
+  const score = entry.entries + leftTime / 6;
+  if(score < 100) {
     return true;
   }
   else {
