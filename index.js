@@ -62,15 +62,17 @@ const parseEntry = (el) => {
 
 const click = ({ link }) => (
   new Promise(async (resolve) => {
+    let clicked = false;
     try {
       await page.goto(link);
       await page.waitFor('body');
       await page.click('.sidebar__entry-insert');
+      clicked = true;
     } catch (e) {
-      console.log(e);
+      // console.log(e);
     }
     await page.waitFor(4000);
-    resolve();
+    resolve(clicked);
   })
 );
 
@@ -79,14 +81,14 @@ const frontPage = async () => {
   await Promise.all(cookies.map((c) => page.setCookie(c)));
   await page.goto('https://www.steamgifts.com/');
   await page.waitFor('.nav__button-container');
-  console.log('Logined Front Page');
+  console.log('Loading entries');
   cookies = await page.cookies();
   saveCookie(cookies);
   const html = await page.content();
   const $ = cheerio.load(html);
   const targets = [];
 
-  $('.giveaway__row-inner-wrap').each(function(i, el) {
+  $('.giveaway__row-inner-wrap').each(function (i, el) {
     if(!$(this).hasClass('is-faded')) {
       const obj = parseEntry($(this));
       if(shouldClick(obj)) {
@@ -95,17 +97,30 @@ const frontPage = async () => {
     }
   })
 
+  console.log(`Targeted ${targets.length} entries ... clicking`);
+  let clickCount = 0;
+
   while (targets.length > 0) {
-    await click(targets.shift());
+    clickCount += (await click(targets.shift())) ? 1 : 0;
   }
 
-  await page.waitFor(180000);
+  console.log(`${clickCount} entries clicked`);
+
+  await page.waitFor(60000);
   frontPage();
 };
 
 const main = async () => {
-  const browser = await puppeteer.launch({ ignoreHTTPSErrors: true, headless: false });
+  const browser = await puppeteer.launch({ ignoreHTTPSErrors: true, headless: true });
   page = await browser.newPage();
+  await page.setRequestInterceptionEnabled(true);
+  page.on('request', request => {
+    if (request.resourceType === 'Image') {
+      request.abort();
+    } else {
+      request.continue();
+    }
+  });
   frontPage();
 };
 
