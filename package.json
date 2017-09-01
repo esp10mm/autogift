@@ -10,6 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "cheerio": "^0.22.0",
-    "nightmare": "^2.7.0"
+    "puppeteer": "^0.10.1"
   }
 }
