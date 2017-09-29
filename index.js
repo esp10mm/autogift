@@ -85,53 +85,53 @@ const click = ({ link }) => (
   })
 );
 
-const frontPage = async () => {
-  let cookies = await loadCookie();
-  await Promise.all(cookies.map((c) => page.setCookie(c)));
-  await page.goto('https://www.steamgifts.com/');
-  await page.waitFor('.nav__button-container');
-  console.log('Loading entries');
-  cookies = await page.cookies();
-  saveCookie(cookies);
-  const html = await page.content();
-  const $ = cheerio.load(html);
-  const targets = [];
-
-  $('.giveaway__row-inner-wrap').each(function (i, el) {
-    if(!$(this).hasClass('is-faded')) {
-      const obj = parseEntry($(this));
-      if(shouldClick(obj)) {
-        targets.push({ link: obj.link });
-      }
-    }
-  })
-
-  console.log(`Targeted ${targets.length} entries ... clicking`);
-  let clickCount = 0;
-
-  while (targets.length > 0) {
-    clickCount += (await click(targets.shift())) ? 1 : 0;
-  }
-
-  console.log(`${clickCount} entries clicked`);
-
-  await page.waitFor(60000);
-  frontPage();
-};
-
 const main = async () => {
-  const browser = await puppeteer.launch({ ignoreHTTPSErrors: true, headless: true });
-  page = await browser.newPage();
-  await page.setRequestInterceptionEnabled(true);
-  page.on('request', request => {
-    if (request.resourceType === 'Image') {
-      request.abort();
-    } else {
-      request.continue();
+  try {
+    const browser = await puppeteer.launch({ ignoreHTTPSErrors: true, headless: true });
+    page = await browser.newPage();
+    await page.setRequestInterceptionEnabled(true);
+    page.on('request', request => {
+      if (request.resourceType === 'Image') {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+
+    let cookies = await loadCookie();
+    await Promise.all(cookies.map((c) => page.setCookie(c)));
+    await page.goto('https://www.steamgifts.com/');
+    await page.waitFor('.nav__button-container');
+
+    console.log('Loading entries');
+
+    cookies = await page.cookies();
+    saveCookie(cookies);
+    const html = await page.content();
+    const $ = cheerio.load(html);
+    const targets = [];
+
+    $('.giveaway__row-inner-wrap').each(function (i, el) {
+      if(!$(this).hasClass('is-faded')) {
+        const obj = parseEntry($(this));
+        if(shouldClick(obj)) {
+          targets.push({ link: obj.link });
+        }
+      }
+    })
+
+    console.log(`Targeted ${targets.length} entries ... clicking`);
+    let clickCount = 0;
+
+    while (targets.length > 0) {
+      clickCount += (await click(targets.shift())) ? 1 : 0;
     }
-  });
-  frontPage();
+
+    console.log(`${clickCount} entries clicked`);
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 main();
-
+setInterval(main, 60000);
