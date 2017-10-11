@@ -32,7 +32,7 @@ const shouldClick = (entry) => {
   } else {
     return false;
   }
-  const score = entry.entries + leftTime / 6;
+  const score = entry.entries + leftTime / 60;
   if(score < 100) {
     return true;
   }
@@ -128,10 +128,11 @@ const main = async () => {
     }
 
     console.log(`${clickCount} entries clicked`);
+    await browser.close();
   } catch (err) {
     console.log(err);
   }
 };
 
 main();
-setInterval(main, 60000);
+setInterval(main, 300000);
