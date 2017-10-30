@@ -76,6 +76,7 @@ const click = ({ link }) => (
       await page.goto(link);
       await page.waitFor('body');
       await page.click('.sidebar__entry-insert');
+      console.log(link);
       clicked = true;
     } catch (e) {
       // console.log(e);
@@ -86,8 +87,9 @@ const click = ({ link }) => (
 );
 
 const main = async () => {
+  let browser;
   try {
-    const browser = await puppeteer.launch({ ignoreHTTPSErrors: true, headless: true });
+    browser = await puppeteer.launch({ ignoreHTTPSErrors: true, headless: true });
     page = await browser.newPage();
     await page.setRequestInterceptionEnabled(true);
     page.on('request', request => {
@@ -131,6 +133,9 @@ const main = async () => {
     await browser.close();
   } catch (err) {
     console.log(err);
+    if (browser) {
+      await browser.close();
+    }
   }
 };
 
