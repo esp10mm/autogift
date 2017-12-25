@@ -140,4 +140,3 @@ const main = async () => {
 };
 
 main();
-setInterval(main, 300000);
